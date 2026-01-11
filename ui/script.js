@@ -1,295 +1,316 @@
 const gtaWeatherIcons = {
-	blizzard:       "❄️",
-	clear:          "☀️",
-	clearing:       "🌦️",
-	clouds:         "⛅",
-	extrasunny:     "☀️",
-	foggy:          "🌫️",
-	halloween:      "🎃",
-	neutral:        "🌧️",
-	overcast:       "☁️",
-	rain:           "🌧️",
-	smog:           "🌫️",
-	snow:           "🌨️",
-	snowlight:      "🌨️",
-	thunder:        "⛈️",
-	xmas:           "🌨️"
+    blizzard:       "❄️",
+    clear:          "☀️",
+    clearing:       "🌦️",
+    clouds:         "⛅",
+    extrasunny:     "☀️",
+    foggy:          "🌫️",
+    halloween:      "🎃",
+    neutral:        "🌧️",
+    overcast:       "☁️",
+    rain:           "🌧️",
+    smog:           "🌫️",
+    snow:           "🌨️",
+    snowlight:      "🌨️",
+    thunder:        "⛈️",
+    xmas:           "🌨️"
 };
 
 const rdrWeatherIcons = {
-	blizzard:       "❄️",
-	clouds:         "⛅",
-	drizzle:        "🌦️",
-	fog:            "🌫️",
-	groundblizzard: "❄️",
-	hail:           "🌨️",
-	highpressure:   "☀️",
-	hurricane:      "🌀",
-	misty:          "🌫️",
-	overcast:       "☁️",
-	overcastdark:   "☁️",
-	rain:           "🌧️",
-	sandstorm:      "🌪️",
-	shower:         "🌧️",
-	sleet:          "🌧️",
-	snow:           "🌨️",
-	snowlight:      "🌨️",
-	sunny:          "☀️",
-	thunder:        "🌩️",
-	thunderstorm:   "⛈️",
-	whiteout:       "❄️"
+    blizzard:       "❄️",
+    clouds:         "⛅",
+    drizzle:        "🌦️",
+    fog:            "🌫️",
+    groundblizzard: "❄️",
+    hail:           "🌨️",
+    highpressure:   "☀️",
+    hurricane:      "🌀",
+    misty:          "🌫️",
+    overcast:       "☁️",
+    overcastdark:   "☁️",
+    rain:           "🌧️",
+    sandstorm:      "🌪️",
+    shower:         "🌧️",
+    sleet:          "🌧️",
+    snow:           "🌨️",
+    snowlight:      "🌨️",
+    sunny:          "☀️",
+    thunder:        "🌩️",
+    thunderstorm:   "⛈️",
+    whiteout:       "❄️"
 };
 
-var weatherIcons = {};
 
-var isRDR = false;
 
-function toggleDisplay(e, display) {
-	if (e.style.display == display) {
-		e.style.display = 'none';
-	} else {
-		e.style.display = display;
-	}
+function weatherApp() {
+    return {
+        // State
+        isRDR: false,
+        weatherIcons: {},
+        forecastVisible: false,
+        adminUiVisible: false,
+
+        // Forecast data
+        forecast: [],
+        temperature: '',
+        wind: '',
+        syncEnabled: false,
+        altitudeSea: 0,
+        altitudeTerrain: 0,
+
+        // Current values (readonly)
+        current: {
+            dayName: '',
+            hour: 0,
+            min: 0,
+            sec: 0,
+            timescale: 0,
+            weather: '',
+            weatherDisplay: '',
+            windDirection: 0,
+            windSpeed: 0
+        },
+
+        // New values to set
+        newTime: {
+            day: 0,
+            hour: 0,
+            min: 0,
+            sec: 0,
+            transition: 5000,
+            freeze: false
+        },
+        newTimescale: 0,
+        newWeather: {
+            type: 'sunny',
+            transition: 5,
+            freeze: false,
+            permanentSnow: false
+        },
+        newWind: {
+            direction: 0,
+            speed: 0,
+            freeze: false
+        },
+        syncDelay: 5000,
+        weatherTypes: [],
+
+        // Initialization
+        async init() {
+            try {
+                const resp = await fetch(`https://${GetParentResourceName()}/getGameName`);
+                const data = await resp.json();
+
+                if (data.gameName === "rdr3") {
+                    this.isRDR = true;
+                    this.weatherIcons = rdrWeatherIcons;
+                } else {
+                    this.isRDR = false;
+                    this.weatherIcons = gtaWeatherIcons;
+                }
+            } catch (error) {
+                console.error('Failed to get game name:', error);
+                this.isRDR = false;
+                this.weatherIcons = gtaWeatherIcons;
+            }
+
+            // Only add event listeners once
+            if (!window._weatherAppInitialized) {
+                window._weatherAppInitialized = true;
+
+                // Listen for messages from game
+                window.addEventListener('message', (event) => {
+                    this.handleMessage(event.data);
+                });
+
+                // Listen for ESC key
+                window.addEventListener('keydown', (event) => {
+                    if (event.key === 'Escape' && this.adminUiVisible) {
+                        this.closeAdminUi();
+                    }
+                });
+            }
+
+            // Initialize custom dropdowns after Alpine is ready
+            this.$nextTick(() => {
+                if (typeof CustomDropdown !== 'undefined') {
+                    CustomDropdown.init();
+                }
+            });
+        },
+
+        // Message handler
+        handleMessage(data) {
+            switch (data.action) {
+                case 'toggleForecast':
+                    this.toggleForecast();
+                    break;
+                case 'updateForecast':
+                    this.updateForecast(data);
+                    break;
+                case 'openAdminUi':
+                    this.openAdminUi(data);
+                    break;
+                case 'updateAdminUi':
+                    this.updateAdminUi(data);
+                    break;
+            }
+        },
+
+        // Utility functions
+        dayOfWeek(day) {
+            return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][day];
+        },
+
+        getWeatherIcon(weather) {
+            return this.weatherIcons[weather] || weather;
+        },
+
+        // Forecast methods
+        toggleForecast() {
+            this.forecastVisible = !this.forecastVisible;
+        },
+
+        updateForecast(data) {
+            const forecastData = JSON.parse(data.forecast);
+
+            let prevDay = null;
+            this.forecast = forecastData.map(item => {
+                const showDay = item.day !== prevDay;
+                prevDay = item.day;
+                return {
+                    ...item,
+                    showDay
+                };
+            });
+
+            this.temperature = data.temperature;
+            this.wind = data.wind;
+            this.altitudeSea = data.altitudeSea;
+            this.altitudeTerrain = data.altitudeTerrain;
+            this.syncEnabled = data.syncEnabled;
+        },
+
+        // Admin UI methods
+        openAdminUi(data) {
+            // Pre-load data before showing UI to avoid lag during transition
+            if (data && data.weatherTypes) {
+                this.updateAdminUi(data);
+            }
+
+            // Show UI after data is ready
+            this.adminUiVisible = true;
+
+            // Initialize dropdowns when admin UI opens
+            this.$nextTick(() => {
+                if (typeof CustomDropdown !== 'undefined') {
+                    CustomDropdown.init();
+                }
+            });
+        },
+
+        updateAdminUi(data) {
+            const weatherTypes = JSON.parse(data.weatherTypes);
+
+            this.current.dayName = this.dayOfWeek(data.day);
+            this.current.hour = data.hour;
+            this.current.min = data.min;
+            this.current.sec = data.sec;
+            this.current.timescale = data.timescale;
+            this.current.weather = data.weather;
+            this.current.weatherDisplay = this.getWeatherIcon(data.weather) + ' ' + data.weather;
+            this.current.windDirection = data.windDirection;
+            this.current.windSpeed = data.windSpeed;
+            this.syncDelay = data.syncDelay;
+
+            // Populate weather types if not already done
+            if (this.weatherTypes.length === 0) {
+                this.weatherTypes = weatherTypes;
+                this.newWeather.type = weatherTypes[0];
+
+                // Wait for Alpine to render options, then initialize dropdown
+                this.$nextTick(() => {
+                    setTimeout(() => {
+                        if (typeof CustomDropdown !== 'undefined') {
+                            const select = document.getElementById('weather-type-select');
+                            if (select && select.options.length > 0) {
+                                CustomDropdown.refresh('#weather-type-select');
+                            }
+                        }
+                    }, 150);
+                });
+            }
+        },
+
+        async closeAdminUi() {
+            this.adminUiVisible = false;
+
+            await fetch(`https://${GetParentResourceName()}/closeAdminUi`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: '{}'
+            });
+        },
+
+        // Apply methods
+        async applyTime() {
+            await fetch(`https://${GetParentResourceName()}/setTime`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    day: parseInt(this.newTime.day),
+                    hour: parseInt(this.newTime.hour),
+                    min: parseInt(this.newTime.min),
+                    sec: parseInt(this.newTime.sec),
+                    transition: parseInt(this.newTime.transition),
+                    freeze: this.newTime.freeze
+                })
+            });
+        },
+
+        async applyTimescale() {
+            await fetch(`https://${GetParentResourceName()}/setTimescale`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    timescale: parseFloat(this.newTimescale)
+                })
+            });
+        },
+
+        async applyWeather() {
+            await fetch(`https://${GetParentResourceName()}/setWeather`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    weather: this.newWeather.type,
+                    transition: parseFloat(this.newWeather.transition),
+                    freeze: this.newWeather.freeze,
+                    permanentSnow: this.newWeather.permanentSnow
+                })
+            });
+        },
+
+        async applyWind() {
+            await fetch(`https://${GetParentResourceName()}/setWind`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    windSpeed: parseFloat(this.newWind.speed),
+                    windDirection: parseFloat(this.newWind.direction),
+                    freeze: this.newWind.freeze
+                })
+            });
+        },
+
+        async applySyncDelay() {
+            await fetch(`https://${GetParentResourceName()}/setSyncDelay`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    syncDelay: parseInt(this.syncDelay)
+                })
+            });
+        }
+    };
 }
-
-function toggleForecast() {
-	toggleDisplay(document.querySelector('#forecast'), 'table');
-	toggleDisplay(document.querySelector('#sync'), 'block');
-	toggleDisplay(document.querySelector('#altimeter'), 'block');
-	toggleDisplay(document.querySelector('#wind'), 'block');
-
-	if (isRDR) {
-		toggleDisplay(document.querySelector('#temperature'), 'block');
-	}
-}
-
-function dayOfWeek(day) {
-	return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][day];
-}
-
-function updateForecast(data) {
-	var f = document.querySelector('#forecast');
-	var t = document.querySelector('#temperature');
-	var w = document.querySelector('#wind');
-
-	var as = document.getElementById('altitude-sea');
-	var at = document.getElementById('altitude-terrain');
-
-	var forecastData = JSON.parse(data.forecast)
-
-	f.innerHTML = '';
-
-	var prevDay;
-
-	for (var i = 0; i < forecastData.length; ++i) {
-		var hour = document.createElement('div');
-		hour.className = 'forecast-hour';
-
-		var day = document.createElement('div');
-		day.className = 'forecast-day';
-
-		if (forecastData[i].day != prevDay) {
-			day.innerHTML = dayOfWeek(forecastData[i].day);
-			prevDay = forecastData[i].day;
-		}
-		
-		var time = document.createElement('div');
-		time.className = 'forecast-time';
-		time.innerHTML = forecastData[i].time;
-		
-		var weather = document.createElement('div');
-		weather.className = 'forecast-weather';
-		weather.innerHTML = weatherIcons[forecastData[i].weather] || forecastData[i].weather;
-
-		var wind = document.createElement('div');
-		wind.className = 'forecast-wind';
-		wind.innerHTML = forecastData[i].wind;
-
-		hour.appendChild(day);
-		hour.appendChild(time);
-		hour.appendChild(weather);
-		hour.appendChild(wind);
-		f.appendChild(hour);
-	}
-
-	t.innerHTML = data.temperature;
-
-	w.innerHTML = data.wind;
-
-	as.innerHTML = data.altitudeSea;
-	at.innerHTML = data.altitudeTerrain;
-
-	if (data.syncEnabled) {
-		document.getElementById('sync-status').innerHTML = '✔️';
-	} else {
-		document.getElementById('sync-status').innerHTML = '🚫';
-	}
-}
-
-function openAdminUi(data) {
-	document.querySelector('#admin-ui').style.display = 'block';
-}
-
-function updateAdminUi(data) {
-	var weatherTypes = JSON.parse(data.weatherTypes);
-	var curDay = document.querySelector('#cur-day');
-	var curHour = document.querySelector('#cur-hour');
-	var curMin = document.querySelector('#cur-min');
-	var curSec = document.querySelector('#cur-sec');
-	var timescale = document.querySelector('#cur-timescale');
-	var weather = document.querySelector('#cur-weather-type');
-	var windDirection = document.querySelector('#cur-wind-direction');
-	var windSpeed = document.querySelector('#cur-wind-speed');
-	var syncDelay = document.querySelector('#sync-delay');
-
-	curDay.value = dayOfWeek(data.day);
-	curHour.value = data.hour;
-	curMin.value = data.min;
-	curSec.value = data.sec;
-	timescale.value = data.timescale;
-	weather.value = weatherIcons[data.weather] + ' ' + data.weather;
-	windDirection.value = data.windDirection;
-	windSpeed.value = data.windSpeed;
-	syncDelay.value = data.syncDelay;
-
-	var weatherSelect = document.querySelector('#new-weather-type');
-	if (!weatherSelect.querySelector('option')) {
-		for (i = 0; i < weatherTypes.length; ++i) {
-			var option = document.createElement('option');
-			option.value = weatherTypes[i];
-			option.innerHTML = weatherTypes[i];
-			weatherSelect.appendChild(option);
-		}
-	}
-}
-
-window.addEventListener('message', function (event) {
-	switch (event.data.action) {
-		case 'toggleForecast':
-			toggleForecast();
-			break;
-		case 'updateForecast':
-			updateForecast(event.data);
-			break;
-		case 'openAdminUi':
-			openAdminUi();
-			break;
-		case 'updateAdminUi':
-			updateAdminUi(event.data);
-			break;
-	}
-});
-
-window.addEventListener('load', function() {
-	fetch(`https://${GetParentResourceName()}/getGameName`).then(resp => resp.json()).then(resp => {
-		if (resp.gameName == "rdr3") {
-			isRDR = true;
-			weatherIcons = rdrWeatherIcons;
-		} else {
-			isRDR = false;
-			weatherIcons = gtaWeatherIcons;
-		}
-	});
-
-	document.querySelector('#apply-time-btn').addEventListener('click', function(event) {
-		var day = document.querySelector('#new-day');
-		var hour = document.querySelector('#new-hour');
-		var min = document.querySelector('#new-min');
-		var sec = document.querySelector('#new-sec');
-		var transition = document.querySelector('#time-transition');
-		var freeze = document.querySelector('#time-freeze');
-
-		fetch('https://' + GetParentResourceName() + '/setTime', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				day: parseInt(day.value),
-				hour: parseInt(hour.value),
-				min: parseInt(min.value),
-				sec: parseInt(sec.value),
-				transition: parseInt(transition.value),
-				freeze: freeze.checked
-			})
-		});
-	});
-
-	document.querySelector('#apply-timescale-btn').addEventListener('click', function(event) {
-		var timescale = document.querySelector('#new-timescale')
-
-		fetch('https://' + GetParentResourceName() + '/setTimescale', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				timescale: parseFloat(timescale.value)
-			})
-		});
-	});
-
-	document.querySelector('#apply-weather-btn').addEventListener('click', function(event) {
-		var weather = document.querySelector('#new-weather-type');
-		var transition = document.querySelector('#weather-transition');
-		var freeze = document.querySelector('#weather-freeze');
-		var permanentSnow = document.querySelector('#weather-permanent-snow');
-
-		fetch('https://' + GetParentResourceName() + '/setWeather', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				weather: weather.value,
-				transition: parseFloat(transition.value),
-				freeze: freeze.checked,
-				permanentSnow: permanentSnow.checked
-			})
-		});
-	});
-
-	document.querySelector('#apply-wind-btn').addEventListener('click', function(event) {
-		var windDirection = document.querySelector('#new-wind-direction');
-		var windSpeed = document.querySelector('#new-wind-speed');
-		var freeze = document.querySelector('#wind-freeze');
-
-		fetch('https://' + GetParentResourceName() + '/setWind', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				windSpeed: parseFloat(windSpeed.value),
-				windDirection: parseFloat(windDirection.value),
-				freeze: freeze.checked
-			})
-		});
-	});
-
-	document.querySelector('#apply-sync-delay-btn').addEventListener('click', function(event) {
-		var syncDelay = document.querySelector('#sync-delay');
-
-		fetch('https://' + GetParentResourceName() + '/setSyncDelay', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				syncDelay: parseInt(syncDelay.value)
-			})
-		});
-	});
-
-	document.querySelector('#admin-ui-close-btn').addEventListener('click', function(event) {
-		document.querySelector('#admin-ui').style.display = 'none';
-
-		fetch('https://' + GetParentResourceName() + '/closeAdminUi', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: "{}"
-		});
-	});
-});

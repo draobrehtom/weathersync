@@ -1,80 +1,81 @@
-GTAVWeatherTypes = {
-	"blizzard",
-	"clear",
-	"clearing",
-	"clouds",
-	"extrasunny",
-	"foggy",
-	"halloween",
-	"neutral",
-	"overcast",
-	"rain",
-	"smog",
-	"snow",
-	"snowlight",
-	"thunder",
-	"xmas"
-}
-
 RDR2WeatherTypes = {
-	"blizzard",
-	"clouds",
-	"drizzle",
-	"fog",
-	"groundblizzard",
-	"hail",
-	"highpressure",
-	"hurricane",
-	"misty",
-	"overcast",
-	"overcastdark",
-	"rain",
-	"sandstorm",
-	"shower",
-	"sleet",
-	"snow",
-	"snowlight",
-	"sunny",
-	"thunder",
-	"thunderstorm",
-	"whiteout"
+    "blizzard",
+    "clouds",
+    "drizzle",
+    "fog",
+    "groundblizzard",
+    "hail",
+    "highpressure",
+    "hurricane",
+    "misty",
+    "overcast",
+    "overcastdark",
+    "rain",
+    "sandstorm",
+    "shower",
+    "sleet",
+    "snow",
+    "snowlight",
+    "sunny",
+    "thunder",
+    "thunderstorm",
+    "whiteout"
 }
 
 function TimeToDHMS(time)
-	local day = math.floor(time / 86400)
-	local hour = math.floor(time / 60 / 60) % 24
-	local minute = math.floor(time / 60) % 60
-	local second = time % 60
+    local day = math.floor(time / 86400)
+    local hour = math.floor(time / 60 / 60) % 24
+    local minute = math.floor(time / 60) % 60
+    local second = time % 60
 
-	return day, hour, minute, second
+    return day, hour, minute, second
 end
 
 function DHMSToTime(day, hour, minute, second)
-	return day * 86400 + hour * 3600 + minute * 60 + second
+    return day * 86400 + hour * 3600 + minute * 60 + second
 end
 
 function GetCardinalDirection(h)
-	if h <= 22.5 then
-		return "N"
-	elseif h <= 67.5 then
-		return "NE"
-	elseif h <= 112.5 then
-		return "E"
-	elseif h <= 157.5 then
-		return "SE"
-	elseif h <= 202.5 then
-		return "S"
-	elseif h <= 247.5 then
-		return "SW"
-	elseif h <= 292.5 then
-		return "W"
-	elseif h <= 337.5 then
-		return "NW"
-	else
-		return "N"
-	end
+    if h <= 22.5 then
+        return "N"
+    elseif h <= 67.5 then
+        return "NE"
+    elseif h <= 112.5 then
+        return "E"
+    elseif h <= 157.5 then
+        return "SE"
+    elseif h <= 202.5 then
+        return "S"
+    elseif h <= 247.5 then
+        return "SW"
+    elseif h <= 292.5 then
+        return "W"
+    elseif h <= 337.5 then
+        return "NW"
+    else
+        return "N"
+    end
 end
 
 function GetDayOfWeek(day)
-	return ({"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"})[day + 1]
+    return ({"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"})[day + 1]
+end
+
+function FormatTime(time)
+    local day, hour, minute, second = TimeToDHMS(time)
+    return string.format("%s %.2d:%.2d:%.2d", GetDayOfWeek(day), hour, minute, second)
+end
+
+if IsDuplicityVersion() then
+    function getCurrentTime(baseServerTime, timescale, dayLength, weekLength, baseGameTime)
+        if timescale == 0 then
+            -- Sync with real-world time, but use baseGameTime as offset
+            local elapsedRealTime = (GetGameTimer() - baseServerTime) / 1000
+            return math.floor(baseGameTime + elapsedRealTime) % weekLength
+        else
+            -- Calculate based on timescale
+            local elapsedRealTime = (GetGameTimer() - baseServerTime) / 1000
+            return math.floor(baseGameTime + (elapsedRealTime * timescale)) % weekLength
+        end
+    end
 end

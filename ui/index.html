@@ -1,184 +1,223 @@
+<!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<title>Forecast</title>
-		<link rel="stylesheet" type="text/css" href="style.css">
-		<script type="text/javascript" src="script.js"></script>
-	</head>
-	<body>
-		<div id="temperature"></div>
-		<div id="forecast"></div>
-		<div id="wind"></div>
-		<div id="sync">Sync: <span id="sync-status"></span></div>
-		<div id="altimeter">
-			<div class="altimeter-gauge">
-				<div class="altimeter-gauge-label">🌊MSL</div>
-				<div class="altimeter-gauge-value"><span id="altitude-sea"></span>m</div>
-			</div>
-			<div class="altimeter-gauge">
-				<div class="altimeter-gauge-label">⛰️AGL</div>
-				<div class="altimeter-gauge-value"><span id="altitude-terrain"></span>m</div>
-			</div>
-		</div>
-		<div id="admin-ui">
-			<div class="admin-ui-option-group">
-				<div class="title">Time</div>
-				<div class="input-group">
-					<div class="labelled-input">
-						<div class="label">Current time:</div>
-						<div class="input">
-							<input type="text" id="cur-day" readonly size="3">
-							<input type="number" id="cur-hour" readonly min="0" max="23" step="1">
-							<input type="number" id="cur-min" readonly min="0" max="59" step="1">
-							<input type="number" id="cur-sec" readonly min="0" max="59" step="1">
-						</div>
-					</div>
-					<div class="labelled-input">
-						<div class="label">Set time:</div>
-						<div class="input">
-							<select id="new-day">
-								<option value="0">Sun</option>
-								<option value="1">Mon</option>
-								<option value="2">Tue</option>
-								<option value="3">Wed</option>
-								<option value="4">Thu</option>
-								<option value="5">Fri</option>
-								<option value="6">Sat</option>
-							</select>
-							<input type="number" id="new-hour" min="0" max="23" step="1" value="0">
-							<input type="number" id="new-min" min="0" max="59" step="1" value="0">
-							<input type="number" id="new-sec" min="0" max="59" step="1" value="0">
-						</div>
-					</div>
-					<div class="labelled-input">
-						<div class="label">Transition:</div>
-						<div class="input">
-							<input type="number" id="time-transition" min="0" step="1000" value="5000">
-						</div>
-					</div>
-					<div class="labelled-input">
-						<div class="label">Freeze time:</div>
-						<div class="input">
-							<input type="checkbox" id="time-freeze">
-						</div>
-					</div>
-				</div>
-				<div class="admin-ui-option-group-controls">
-					<button id="apply-time-btn">Apply</button>
-				</div>
-			</div>
-			<div class="admin-ui-option-group">
-				<div class="title">Timescale</div>
-				<div class="input-group">
-					<div class="labelled-input">
-						<div class="label">Current timescale:</div>
-						<div class="input">
-							<input type="number" id="cur-timescale" min="1" step="1" readonly>
-						</div>
-					</div>
-					<div class="labelled-input">
-						<div class="label">Set timescale:</div>
-						<div class="input">
-							<input type="number" id="new-timescale" min="1" step="1" value="0">
-						</div>
-					</div>
-				</div>
-				<div class="admin-ui-option-group-controls">
-					<button id="apply-timescale-btn">Apply</button>
-				</div>
-			</div>
-			<div class="admin-ui-option-group">
-				<div class="title">Weather</div>
-				<div class="input-group">
-					<div class="labelled-input">
-						<div class="label">Current type:</div>
-						<div class="input">
-							<input type="text" id="cur-weather-type" readonly>
-						</div>
-					</div>
-					<div class="labelled-input">
-						<div class="label">Set type:</div>
-						<div class="input">
-							<select id="new-weather-type"></select>
-						</div>
-					</div>
-					<div class="labelled-input">
-						<div class="label">Transition:</div>
-						<div class="input">
-							<input type="number" id="weather-transition" min="0" step="1" value="5">
-						</div>
-					</div>
-					<div class="labelled-input">
-						<div class="label">Freeze weather:</div>
-						<div class="input">
-							<input type="checkbox" id="weather-freeze">
-						</div>
-					</div>
-					<div class="labelled-input">
-						<div class="label">Permanent Snow:</div>
-						<div class="input">
-							<input type="checkbox" id="weather-permanent-snow">
-						</div>
-					</div>
-				</div>
-				<div class="admin-ui-option-group-controls">
-					<button id="apply-weather-btn">Apply</button>
-				</div>
-			</div>
-			<div class="admin-ui-option-group">
-				<div class="title">Wind</div>
-				<div class="input-group">
-					<div class="labelled-input">
-						<div class="label">Current direction:</div>
-						<div class="input">
-							<input type="number" id="cur-wind-direction" min="0" max="359" step="1" readonly>
-						</div>
-					</div>
-					<div class="labelled-input">
-						<div class="label">Current speed:</div>
-						<div class="input">
-							<input type="number" id="cur-wind-speed" min="0" max="1000" step="1" readonly>
-						</div>
-					</div>
-					<div class="labelled-input">
-						<div class="label">Set direction:</div>
-						<div class="input">
-							<input type="number" id="new-wind-direction" min="0" max="359" step="1" value="0">
-						</div>
-					</div>
-					<div class="labelled-input">
-						<div class="label">Set speed:</div>
-						<div class="input">
-							<input type="number" id="new-wind-speed" min="0" max="1000" step="1" value="0">
-						</div>
-					</div>
-					<div class="labelled-input">
-						<div class="label">Freeze wind:</div>
-						<div class="input">
-							<input type="checkbox" id="wind-freeze">
-						</div>
-					</div>
-				</div>
-				<div class="admin-ui-option-group-controls">
-					<button id="apply-wind-btn">Apply</button>
-				</div>
-			</div>
-			<div class="admin-ui-option-group">
-				<div class="title">Sync Delay</div>
-				<div class="input-group">
-					<div class="labelled-input">
-						<div class="input">
-							<input type="number" id="sync-delay">
-						</div>
-					</div>
-				</div>
-				<div class="admin-ui-option-group-controls">
-					<button id="apply-sync-delay-btn">Apply</button>
-				</div>
-			</div>
-			<div class="admin-ui-controls">
-				<button id="admin-ui-close-btn">Close</button>
-			</div>
-		</div>
-	</body>
+<head>
+    <meta charset="utf-8">
+    <title>Forecast</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script type="text/javascript" src="custom-dropdown.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script type="text/javascript" src="script.js"></script>
+</head>
+<body x-data="weatherApp()" x-init="init()">
+    <!-- Forecast Display -->
+    <div x-show="forecastVisible">
+        <div id="temperature" x-show="isRDR" x-text="temperature"></div>
+        <div id="forecast">
+            <template x-for="(item, index) in forecast" :key="index">
+                <div class="forecast-hour">
+                    <div class="forecast-day" x-text="item.showDay ? dayOfWeek(item.day) : ''"></div>
+                    <div class="forecast-time" x-text="item.time"></div>
+                    <div class="forecast-weather" x-text="getWeatherIcon(item.weather)"></div>
+                    <div class="forecast-wind" x-text="item.wind"></div>
+                </div>
+            </template>
+        </div>
+        <div id="wind" x-text="wind"></div>
+        <div id="sync">Sync: <span x-text="syncEnabled ? '✔️' : '🚫'"></span></div>
+        <div id="altimeter">
+            <div class="altimeter-gauge">
+                <div class="altimeter-gauge-label">🌊MSL</div>
+                <div class="altimeter-gauge-value"><span x-text="altitudeSea"></span>m</div>
+            </div>
+            <div class="altimeter-gauge">
+                <div class="altimeter-gauge-label">⛰️AGL</div>
+                <div class="altimeter-gauge-value"><span x-text="altitudeTerrain"></span>m</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin UI -->
+    <div id="admin-ui" x-show="adminUiVisible">
+        <!-- Time Section -->
+        <div class="admin-ui-option-group">
+            <div class="title">Time</div>
+            <div class="input-group">
+                <div class="labelled-input">
+                    <div class="label">Current time:</div>
+                    <div class="input">
+                        <input type="text" x-model="current.dayName" readonly size="3">
+                        <input type="number" x-model="current.hour" readonly min="0" max="23" step="1">
+                        <input type="number" x-model="current.min" readonly min="0" max="59" step="1">
+                        <input type="number" x-model="current.sec" readonly min="0" max="59" step="1">
+                    </div>
+                </div>
+                <div class="labelled-input">
+                    <div class="label">Day:</div>
+                    <div class="input">
+                        <select data-custom-dropdown x-model.number="newTime.day">
+                            <option value="0">Sun</option>
+                            <option value="1">Mon</option>
+                            <option value="2">Tue</option>
+                            <option value="3">Wed</option>
+                            <option value="4">Thu</option>
+                            <option value="5">Fri</option>
+                            <option value="6">Sat</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="labelled-input">
+                    <div class="label">Hour:</div>
+                    <div class="input input-with-slider">
+                        <input type="range" x-model.number="newTime.hour" min="0" max="23" step="1">
+                        <span class="slider-value" x-text="newTime.hour"></span>
+                    </div>
+                </div>
+                <div class="labelled-input">
+                    <div class="label">Minute:</div>
+                    <div class="input input-with-slider">
+                        <input type="range" x-model.number="newTime.min" min="0" max="59" step="1">
+                        <span class="slider-value" x-text="newTime.min"></span>
+                    </div>
+                </div>
+                <div class="labelled-input">
+                    <div class="label">Second:</div>
+                    <div class="input input-with-slider">
+                        <input type="range" x-model.number="newTime.sec" min="0" max="59" step="1">
+                        <span class="slider-value" x-text="newTime.sec"></span>
+                    </div>
+                </div>
+                <div class="labelled-input">
+                    <div class="label">Transition:</div>
+                    <div class="input input-with-slider">
+                        <input type="range" x-model.number="newTime.transition" min="0" max="60000" step="1000">
+                        <span class="slider-value" x-text="newTime.transition"></span>
+                    </div>
+                </div>
+                <div class="labelled-input">
+                    <div class="label">Freeze time:</div>
+                    <div class="input">
+                        <input type="checkbox" x-model="newTime.freeze">
+                    </div>
+                </div>
+            </div>
+            <div class="admin-ui-option-group-controls">
+                <button @click="applyTime()">Apply</button>
+            </div>
+        </div>
+
+        <!-- Timescale Section -->
+        <div class="admin-ui-option-group">
+            <div class="title">Timescale</div>
+            <div class="input-group">
+                <div class="labelled-input">
+                    <div class="label">Current timescale:</div>
+                    <div class="input">
+                        <input type="number" x-model="current.timescale" readonly min="0" step="1">
+                    </div>
+                </div>
+                <div class="labelled-input">
+                    <div class="label">Set timescale:</div>
+                    <div class="input input-with-slider">
+                        <input type="range" x-model.number="newTimescale" min="0" max="100" step="1">
+                        <span class="slider-value" x-text="newTimescale"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="admin-ui-option-group-controls">
+                <button @click="applyTimescale()">Apply</button>
+            </div>
+        </div>
+
+        <!-- Weather Section -->
+        <div class="admin-ui-option-group">
+            <div class="title">Weather</div>
+            <div class="input-group">
+                <div class="labelled-input">
+                    <div class="label">Current type:</div>
+                    <div class="input">
+                        <input type="text" x-model="current.weatherDisplay" readonly>
+                    </div>
+                </div>
+                <div class="labelled-input">
+                    <div class="label">Set type:</div>
+                    <div class="input">
+                        <select id="weather-type-select" data-custom-dropdown x-model="newWeather.type">
+                            <template x-for="type in weatherTypes" :key="type">
+                                <option :value="type" x-text="type"></option>
+                            </template>
+                        </select>
+                    </div>
+                </div>
+                <div class="labelled-input">
+                    <div class="label">Transition:</div>
+                    <div class="input input-with-slider">
+                        <input type="range" x-model.number="newWeather.transition" min="0" max="60" step="1">
+                        <span class="slider-value" x-text="newWeather.transition"></span>
+                    </div>
+                </div>
+                <div class="labelled-input">
+                    <div class="label">Freeze weather:</div>
+                    <div class="input">
+                        <input type="checkbox" x-model="newWeather.freeze">
+                    </div>
+                </div>
+                <div class="labelled-input">
+                    <div class="label">Permanent Snow:</div>
+                    <div class="input">
+                        <input type="checkbox" x-model="newWeather.permanentSnow">
+                    </div>
+                </div>
+            </div>
+            <div class="admin-ui-option-group-controls">
+                <button @click="applyWeather()">Apply</button>
+            </div>
+        </div>
+
+        <!-- Wind Section -->
+        <div class="admin-ui-option-group">
+            <div class="title">Wind</div>
+            <div class="input-group">
+                <div class="labelled-input">
+                    <div class="label">Current direction:</div>
+                    <div class="input">
+                        <input type="number" x-model="current.windDirection" readonly min="0" max="359" step="1">
+                    </div>
+                </div>
+                <div class="labelled-input">
+                    <div class="label">Current speed:</div>
+                    <div class="input">
+                        <input type="number" x-model="current.windSpeed" readonly min="0" max="1000" step="1">
+                    </div>
+                </div>
+                <div class="labelled-input">
+                    <div class="label">Set direction:</div>
+                    <div class="input input-with-slider">
+                        <input type="range" x-model.number="newWind.direction" min="0" max="359" step="1">
+                        <span class="slider-value" x-text="newWind.direction"></span>
+                    </div>
+                </div>
+                <div class="labelled-input">
+                    <div class="label">Set speed:</div>
+                    <div class="input input-with-slider">
+                        <input type="range" x-model.number="newWind.speed" min="0" max="100" step="1">
+                        <span class="slider-value" x-text="newWind.speed"></span>
+                    </div>
+                </div>
+                <div class="labelled-input">
+                    <div class="label">Freeze wind:</div>
+                    <div class="input">
+                        <input type="checkbox" x-model="newWind.freeze">
+                    </div>
+                </div>
+            </div>
+            <div class="admin-ui-option-group-controls">
+                <button @click="applyWind()">Apply</button>
+            </div>
+        </div>
+
+        <div class="admin-ui-controls">
+            <button @click="closeAdminUi()">Close</button>
+        </div>
+    </div>
+</body>
 </html>
