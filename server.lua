@@ -22,9 +22,13 @@ local baseGameTime = 0
 local currentTime = 0
 
 -- Initialize time based on config
-if Config.timescale == 0 then
+if Config.time then
+    -- Use explicit starting time from config
+    baseGameTime = Config.time
+    currentTime = baseGameTime
+elseif Config.timescale == 0 then
     -- When using real-time sync, initialize baseGameTime from real server time
-    local now = os.date("*t", os.time() + Config.realTimeOffset)
+    local now = os.date("*t", os.time() + (Config.timezoneOffset or 0) * 3600)
     baseGameTime = now.sec + now.min * 60 + now.hour * 3600 + (now.wday - 1) * dayLength
     currentTime = baseGameTime
 else
@@ -299,6 +303,23 @@ end
 local function getTime()
     local d, h, m, s = TimeToDHMS(currentTime)
     return {day = d, hour = h, minute = m, second = s}
+end
+
+local function resetTime()
+    timeIsFrozen = Config.timeIsFrozen
+    baseServerTime = GetGameTimer()
+
+    if Config.time then
+        baseGameTime = Config.time
+        currentTime = baseGameTime
+    elseif Config.timescale == 0 then
+        local now = os.date("*t", os.time() + (Config.timezoneOffset or 0) * 3600)
+        baseGameTime = now.sec + now.min * 60 + now.hour * 3600 + (now.wday - 1) * dayLength
+        currentTime = baseGameTime
+    else
+        baseGameTime = 0
+        currentTime = 0
+    end
 end
 
 local function setTimescale(scale)

@@ -5,11 +5,16 @@ Config.Notify = false
 -- RedM only
 Config.weatherTypes = RDR2WeatherTypes
 
+-- Default time when the resource starts (day, hour, minute, second).
+-- nil = use real server time (when timescale is 0) or start at Sun 00:00 (when timescale > 0)
+-- Example: DHMSToTime(0, 6, 0, 0) to always start at Sun 06:00
+Config.time = nil
+
 -- Default ratio of in-game seconds to real seconds. Standard game time is 30:1, or 1 in-game minute = 2 real seconds. A value of 0 means time will be synced with the real server time.
 Config.timescale = 0
 
--- If Config.timescale is 0, offset the real server time by this many seconds.
-Config.realTimeOffset = 0
+-- Timezone offset in hours from server time (e.g. 3 for UTC+3, -5 for UTC-5). Only used when syncing with real server time (timescale = 0 and Config.time = nil).
+Config.timezoneOffset = 0
 
 -- Whether time is frozen when the resource starts
 Config.timeIsFrozen = false
