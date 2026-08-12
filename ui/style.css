@@ -1,6 +1,12 @@
+/* Chinese Rocks maps Cyrillic (and a few punctuation marks) to empty glyphs,
+   so the browser renders them blank instead of falling back. Limit it to Latin;
+   a locale in another script then falls through to the generic font in the
+   stacks below. To keep the western look there, register a second face for
+   that range under this same family name. */
 @font-face {
     font-family: "Chinese Rocks";
     src: url('CHINESER.TTF');
+    unicode-range: U+0000-024F;
 }
 
 html, body {
@@ -22,7 +28,7 @@ html, body {
     padding-left: 0.5vw;
     padding-right: 0.5vw;
     font-size: 1.7vw;
-    font-family: "Chinese Rocks";
+    font-family: "Chinese Rocks", sans-serif;
 }
 
 .forecast-hour {
@@ -64,7 +70,7 @@ html, body {
     background-color: rgba(0, 0, 0, 0.5);
     color: white;
     font-size: 1.7vw;
-    font-family: "Chinese Rocks";
+    font-family: "Chinese Rocks", sans-serif;
     padding: 0.5vh 0.5vw;
 }
 
@@ -76,7 +82,7 @@ html, body {
     background-color: rgba(0, 0, 0, 0.5);
     color: white;
     font-size: 1.7vw;
-    font-family: "Chinese Rocks";
+    font-family: "Chinese Rocks", sans-serif;
     padding: 0.5vh 0.5vw;
 }
 
@@ -86,7 +92,7 @@ html, body {
     left: 1%;
     color: white;
     font-size: 2vh;
-    font-family: "Chinese Rocks";
+    font-family: "Chinese Rocks", sans-serif;
 }
 
 #altimeter {
@@ -97,7 +103,7 @@ html, body {
     color: white;
     background-color: rgba(0, 0, 0, 0.5);
     font-size: 1.7vw;
-    font-family: "Chinese Rocks";
+    font-family: "Chinese Rocks", sans-serif;
     padding: 0.5vh 0.5vw;
 }
 
@@ -126,7 +132,7 @@ html, body {
     background-color: rgba(0, 0, 0, 0.85);
     color: white;
     font-size: 0.85vw;
-    font-family: "Chinese Rocks";
+    font-family: "Chinese Rocks", sans-serif;
     padding: 1vh 1.5vw;
     border: 2px solid rgba(255, 255, 255, 0.3);
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
