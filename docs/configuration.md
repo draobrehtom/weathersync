@@ -79,6 +79,18 @@ Full table and the region boundaries: see `regionWeatherRules` in
 | `Config.windSpeed` | `0.0` | Base speed. |
 | `Config.windShear*` | — | Wind gets stronger and shifts direction at altitude. Defaults are fine for most servers. |
 
+## Language
+
+| Option | Default | What it does |
+|---|---|---|
+| `Config.locale` | `"en"` | Language of chat messages, command suggestions and the UI. |
+
+All text lives in `locales/<code>.lua` — day names, wind directions, weather
+labels, command help and the admin UI. To add a language, copy `locales/en.lua`,
+translate the values, register the file in `fxmanifest.lua` (`shared_scripts`)
+and point `Config.locale` at it. Missing keys fall back to English, so a partial
+translation is safe.
+
 ## Other
 
 | Option | Default | What it does |

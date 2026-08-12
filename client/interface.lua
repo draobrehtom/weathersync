@@ -33,7 +33,7 @@ local function updateForecast(forecast)
         end
 
         forecast[i].weather = LumanWeather.translateWeatherForRegion(forecast[i].weather, x, y, z)
-        forecast[i].wind = GetCardinalDirection(forecast[i].wind)
+        forecast[i].wind = GetCardinalLabel(forecast[i].wind)
     end
 
     local metric = ShouldUseMetricTemperature()
@@ -50,10 +50,10 @@ local function updateForecast(forecast)
     local windSpeed, windSpeedUnit
     if metric then
         windSpeed = math.floor(GetWindSpeed() * 3.6)
-        windSpeedUnit = "kph"
+        windSpeedUnit = L("units.kph")
     else
         windSpeed = math.floor(GetWindSpeed() * 3.6 * 0.621371)
-        windSpeedUnit = "mph"
+        windSpeedUnit = L("units.mph")
     end
 
     local state = LumanWeather.getState()
@@ -62,7 +62,7 @@ local function updateForecast(forecast)
         action = "updateForecast",
         forecast = json.encode(forecast),
         temperature = string.format("%d °%s", temperature, temperatureUnit),
-        wind = string.format("🌬️ %d %s %s", windSpeed, windSpeedUnit, GetCardinalDirection(state.windDirection)),
+        wind = string.format("🌬️ %d %s %s", windSpeed, windSpeedUnit, GetCardinalLabel(state.windDirection)),
         syncEnabled = state.syncEnabled,
         altitudeSea = string.format("%d", math.floor(pos.z - LumanWeather.MEAN_SEA_LEVEL)),
         altitudeTerrain = string.format("%d", math.floor(GetEntityHeightAboveGround(ped)))
@@ -131,8 +131,14 @@ end)
 -- All mutating callbacks go through server events, which are permission-gated
 -- ============================================================================
 
+-- Also carries the locale: the UI has no strings of its own
 RegisterNUICallback("getGameName", function(data, cb)
-    cb({gameName = "rdr3"})
+    cb({
+        gameName = "rdr3",
+        locale = LGet("ui"),
+        days = LGet("days"),
+        weatherLabels = LGet("weather")
+    })
 end)
 
 RegisterNUICallback("setTime", function(data, cb)

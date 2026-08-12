@@ -302,7 +302,7 @@ local function toggleSync()
     if Config.Notify then
         TriggerEvent("chat:addMessage", {
             color = {255, 255, 128},
-            args = {"Luman Weather", syncEnabled and "on" or "off"}
+            args = {L("prefix"), syncEnabled and L("sync.on") or L("sync.off")}
         })
     end
 end

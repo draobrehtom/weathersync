@@ -9,6 +9,10 @@ Config = {}
 -- GENERAL
 -- ============================================================================
 
+-- Language for chat messages, command suggestions and the UI.
+-- Available locales live in locales/ (add the file to fxmanifest.lua).
+Config.locale = "en"
+
 -- Show a chat notification when a player toggles sync with /weathersync
 Config.Notify = false
 

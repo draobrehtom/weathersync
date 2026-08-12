@@ -21,7 +21,7 @@ RegisterCommand("weather", function(source, args, raw)
     if TableContains(Config.weatherTypes, weather) then
         LumanWeather.setWeather(weather, transition + 0.0, freeze, permanentSnow)
     else
-        printMessage(source, {color = {255, 0, 0}, args = {"Error", "Unknown weather type: " .. weather}})
+        printMessage(source, {color = {255, 0, 0}, args = {L("error.label"), L("error.unknownWeatherType", weather)}})
     end
 end, true)
 
@@ -36,7 +36,7 @@ RegisterCommand("time", function(source, args, raw)
 
         LumanWeather.setTime(d, h, m, s, t, f)
     else
-        printMessage(source, {color = {255, 255, 128}, args = {"Time", FormatTime(LumanWeather.getTimeSeconds())}})
+        printMessage(source, {color = {255, 255, 128}, args = {L("server.time"), FormatTime(LumanWeather.getTimeSeconds())}})
     end
 end, true)
 
@@ -46,7 +46,7 @@ RegisterCommand("timescale", function(source, args, raw)
     if scale then
         LumanWeather.setTimescale(scale + 0.0)
     else
-        printMessage(source, {color = {255, 255, 128}, args = {"Timescale", LumanWeather.getState().timescale}})
+        printMessage(source, {color = {255, 255, 128}, args = {L("server.timescale"), LumanWeather.getState().timescale}})
     end
 end, true)
 
@@ -56,7 +56,7 @@ RegisterCommand("syncdelay", function(source, args, raw)
     if delay and delay >= 100 then
         LumanWeather.setSyncDelay(delay)
     else
-        printMessage(source, {color = {255, 255, 128}, args = {"Sync delay", string.format("%dms", LumanWeather.getState().syncDelay)}})
+        printMessage(source, {color = {255, 255, 128}, args = {L("server.syncDelay"), string.format("%d%s", LumanWeather.getState().syncDelay, L("units.ms"))}})
     end
 end, true)
 
@@ -76,13 +76,13 @@ RegisterCommand("forecast", function(source, args, raw)
     else
         local forecast = LumanWeather.getForecast()
 
-        printMessage(source, {args = {"WEATHER FORECAST"}})
-        printMessage(source, {args = {"================"}})
+        printMessage(source, {args = {L("forecast.title")}})
+        printMessage(source, {args = {L("forecast.separator")}})
         for i = 1, #forecast do
-            local time = string.format("%s %.2d:%.2d", GetDayOfWeek(forecast[i].day), forecast[i].hour, forecast[i].minute)
-            printMessage(source, {args = {time, forecast[i].weather}})
+            local time = string.format("%s %.2d:%.2d", GetDayLabel(forecast[i].day), forecast[i].hour, forecast[i].minute)
+            printMessage(source, {args = {time, GetWeatherLabel(forecast[i].weather)}})
         end
-        printMessage(source, {args = {"================"}})
+        printMessage(source, {args = {L("forecast.separator")}})
     end
 end, true)
 
@@ -122,42 +122,42 @@ end, true)
 
 RegisterCommand("weatherdebug_sv", function(source, args, raw)
     local enabled = LumanWeather.toggleDebug()
-    local message = string.format("Server weather debug: %s", enabled and "enabled" or "disabled")
+    local message = L("debug.server", enabled and L("debug.on") or L("debug.off"))
 
     LumanWeather.log(enabled and "success" or "default", message)
-    printMessage(source, {color = {255, 255, 128}, args = {"Luman Weather", message}})
+    printMessage(source, {color = {255, 255, 128}, args = {L("prefix"), message}})
 end, true)
 
 RegisterCommand("weatherstats", function(source, args, raw)
     local state = LumanWeather.getState()
     local stats = LumanWeather.getStats()
 
-    printMessage(source, {color = {100, 200, 255}, args = {"=== Server Weather Stats ==="}})
-    printMessage(source, {color = {255, 255, 255}, args = {"Current Weather", state.weather}})
-    printMessage(source, {color = {255, 255, 255}, args = {"Current Time", FormatTime(state.time)}})
-    printMessage(source, {color = {255, 255, 255}, args = {"Timescale", string.format("%.2f", state.timescale)}})
-    printMessage(source, {color = {255, 255, 255}, args = {"Time Frozen", tostring(state.timeFrozen)}})
-    printMessage(source, {color = {255, 255, 255}, args = {"Weather Frozen", tostring(state.weatherFrozen)}})
-    printMessage(source, {color = {255, 255, 255}, args = {"Wind Frozen", tostring(state.windFrozen)}})
-    printMessage(source, {color = {255, 255, 255}, args = {"Wind Direction", string.format("%.1f° %s", state.windDirection, GetCardinalDirection(state.windDirection))}})
-    printMessage(source, {color = {255, 255, 255}, args = {"Wind Speed", string.format("%.1f", state.windSpeed)}})
-    printMessage(source, {color = {255, 255, 255}, args = {"Permanent Snow", tostring(state.permanentSnow)}})
-    printMessage(source, {color = {255, 255, 255}, args = {"Sync Delay", string.format("%dms", state.syncDelay)}})
-    printMessage(source, {color = {255, 255, 255}, args = {"Weather Interval", string.format("%ds", state.weatherInterval)}})
-    printMessage(source, {color = {255, 255, 255}, args = {"Connected Players", #GetPlayers()}})
+    printMessage(source, {color = {100, 200, 255}, args = {L("stats.title")}})
+    printMessage(source, {color = {255, 255, 255}, args = {L("stats.weather"), state.weather}})
+    printMessage(source, {color = {255, 255, 255}, args = {L("stats.time"), FormatTime(state.time)}})
+    printMessage(source, {color = {255, 255, 255}, args = {L("stats.timescale"), string.format("%.2f", state.timescale)}})
+    printMessage(source, {color = {255, 255, 255}, args = {L("stats.timeFrozen"), tostring(state.timeFrozen)}})
+    printMessage(source, {color = {255, 255, 255}, args = {L("stats.weatherFrozen"), tostring(state.weatherFrozen)}})
+    printMessage(source, {color = {255, 255, 255}, args = {L("stats.windFrozen"), tostring(state.windFrozen)}})
+    printMessage(source, {color = {255, 255, 255}, args = {L("stats.windDirection"), string.format("%.1f° %s", state.windDirection, GetCardinalLabel(state.windDirection))}})
+    printMessage(source, {color = {255, 255, 255}, args = {L("stats.windSpeed"), string.format("%.1f", state.windSpeed)}})
+    printMessage(source, {color = {255, 255, 255}, args = {L("stats.permanentSnow"), tostring(state.permanentSnow)}})
+    printMessage(source, {color = {255, 255, 255}, args = {L("stats.syncDelay"), string.format("%d%s", state.syncDelay, L("units.ms"))}})
+    printMessage(source, {color = {255, 255, 255}, args = {L("stats.weatherInterval"), string.format("%d%s", state.weatherInterval, L("units.s"))}})
+    printMessage(source, {color = {255, 255, 255}, args = {L("stats.players"), #GetPlayers()}})
 
-    printMessage(source, {color = {100, 200, 255}, args = {"=== Sync Statistics ==="}})
-    printMessage(source, {color = {255, 255, 255}, args = {"Weather Changes", tostring(stats.weatherChanges)}})
-    printMessage(source, {color = {255, 255, 255}, args = {"Time Changes", tostring(stats.timeChanges)}})
-    printMessage(source, {color = {255, 255, 255}, args = {"Timescale Changes", tostring(stats.timescaleChanges)}})
-    printMessage(source, {color = {255, 255, 255}, args = {"Wind Changes", tostring(stats.windChanges)}})
-    printMessage(source, {color = {255, 255, 255}, args = {"Player Inits", tostring(stats.playerInits)}})
+    printMessage(source, {color = {100, 200, 255}, args = {L("stats.syncTitle")}})
+    printMessage(source, {color = {255, 255, 255}, args = {L("stats.weatherChanges"), tostring(stats.weatherChanges)}})
+    printMessage(source, {color = {255, 255, 255}, args = {L("stats.timeChanges"), tostring(stats.timeChanges)}})
+    printMessage(source, {color = {255, 255, 255}, args = {L("stats.timescaleChanges"), tostring(stats.timescaleChanges)}})
+    printMessage(source, {color = {255, 255, 255}, args = {L("stats.windChanges"), tostring(stats.windChanges)}})
+    printMessage(source, {color = {255, 255, 255}, args = {L("stats.playerInits"), tostring(stats.playerInits)}})
 
     if stats.lastWeatherChange > 0 then
-        printMessage(source, {color = {255, 255, 255}, args = {"Last Weather Change", string.format("%ds ago", os.time() - stats.lastWeatherChange)}})
+        printMessage(source, {color = {255, 255, 255}, args = {L("stats.lastWeather"), L("stats.ago", os.time() - stats.lastWeatherChange)}})
     end
 
     if stats.lastPlayerInit > 0 then
-        printMessage(source, {color = {255, 255, 255}, args = {"Last Player Init", string.format("%ds ago", os.time() - stats.lastPlayerInit)}})
+        printMessage(source, {color = {255, 255, 255}, args = {L("stats.lastPlayerInit"), L("stats.ago", os.time() - stats.lastPlayerInit)}})
     end
 end, true)

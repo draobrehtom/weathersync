@@ -23,7 +23,7 @@
             </template>
         </div>
         <div id="wind" x-text="wind"></div>
-        <div id="sync">Sync: <span x-text="syncEnabled ? '✔️' : '🚫'"></span></div>
+        <div id="sync"><span x-text="t('sync')"></span>: <span x-text="syncEnabled ? '✔️' : '🚫'"></span></div>
         <div id="altimeter">
             <div class="altimeter-gauge">
                 <div class="altimeter-gauge-label">🌊MSL</div>
@@ -40,10 +40,10 @@
     <div id="admin-ui" x-show="adminUiVisible">
         <!-- Time Section -->
         <div class="admin-ui-option-group">
-            <div class="title">Time</div>
+            <div class="title" x-text="t('time')"></div>
             <div class="input-group">
                 <div class="labelled-input">
-                    <div class="label">Current time:</div>
+                    <div class="label" x-text="t('currentTime')"></div>
                     <div class="input">
                         <input type="text" x-model="current.dayName" readonly size="3">
                         <input type="number" x-model="current.hour" readonly min="0" max="23" step="1">
@@ -52,71 +52,67 @@
                     </div>
                 </div>
                 <div class="labelled-input">
-                    <div class="label">Day:</div>
+                    <div class="label" x-text="t('day')"></div>
                     <div class="input">
-                        <select data-custom-dropdown x-model.number="newTime.day">
-                            <option value="0">Sun</option>
-                            <option value="1">Mon</option>
-                            <option value="2">Tue</option>
-                            <option value="3">Wed</option>
-                            <option value="4">Thu</option>
-                            <option value="5">Fri</option>
-                            <option value="6">Sat</option>
+                        <select id="day-select" data-custom-dropdown x-model.number="newTime.day">
+                            <template x-for="(name, index) in days" :key="index">
+                                <option :value="index" x-text="name"></option>
+                            </template>
                         </select>
                     </div>
                 </div>
                 <div class="labelled-input">
-                    <div class="label">Hour:</div>
+                    <div class="label" x-text="t('hour')"></div>
                     <div class="input input-with-slider">
                         <input type="range" x-model.number="newTime.hour" min="0" max="23" step="1">
                         <span class="slider-value" x-text="newTime.hour"></span>
                     </div>
                 </div>
                 <div class="labelled-input">
-                    <div class="label">Minute:</div>
+                    <div class="label" x-text="t('minute')"></div>
                     <div class="input input-with-slider">
                         <input type="range" x-model.number="newTime.min" min="0" max="59" step="1">
                         <span class="slider-value" x-text="newTime.min"></span>
                     </div>
                 </div>
                 <div class="labelled-input">
-                    <div class="label">Second:</div>
+                    <div class="label" x-text="t('second')"></div>
                     <div class="input input-with-slider">
                         <input type="range" x-model.number="newTime.sec" min="0" max="59" step="1">
                         <span class="slider-value" x-text="newTime.sec"></span>
                     </div>
                 </div>
                 <div class="labelled-input">
-                    <div class="label">Transition:</div>
+                    <div class="label" x-text="t('transition')"></div>
                     <div class="input input-with-slider">
                         <input type="range" x-model.number="newTime.transition" min="0" max="60000" step="1000">
                         <span class="slider-value" x-text="newTime.transition"></span>
                     </div>
                 </div>
                 <div class="labelled-input">
-                    <div class="label">Freeze time:</div>
+                    <div class="label" x-text="t('freezeTime')"></div>
                     <div class="input">
                         <input type="checkbox" x-model="newTime.freeze">
                     </div>
                 </div>
             </div>
             <div class="admin-ui-option-group-controls">
-                <button @click="applyTime()">Apply</button>
+                <button @click="applyTime()" x-text="t('apply')"></button>
             </div>
         </div>
 
         <!-- Timescale Section -->
         <div class="admin-ui-option-group">
-            <div class="title">Timescale</div>
+            <div class="title" x-text="t('timescale')"></div>
             <div class="input-group">
                 <div class="labelled-input">
-                    <div class="label">Current timescale:</div>
+                    <div class="label" x-text="t('currentTimescale')"></div>
                     <div class="input">
                         <input type="number" x-model="current.timescale" readonly min="0" step="1">
                     </div>
                 </div>
                 <div class="labelled-input">
-                    <div class="label">Set timescale:</div>
+                    <div class="label" x-text="t('setTimescale')"></div>
                     <div class="input input-with-slider">
                         <input type="range" x-model.number="newTimescale" min="0" max="100" step="1">
                         <span class="slider-value" x-text="newTimescale"></span>
@@ -124,99 +120,99 @@
                 </div>
             </div>
             <div class="admin-ui-option-group-controls">
-                <button @click="applyTimescale()">Apply</button>
+                <button @click="applyTimescale()" x-text="t('apply')"></button>
             </div>
         </div>
 
         <!-- Weather Section -->
         <div class="admin-ui-option-group">
-            <div class="title">Weather</div>
+            <div class="title" x-text="t('weather')"></div>
             <div class="input-group">
                 <div class="labelled-input">
-                    <div class="label">Current type:</div>
+                    <div class="label" x-text="t('currentType')"></div>
                     <div class="input">
                         <input type="text" x-model="current.weatherDisplay" readonly>
                     </div>
                 </div>
                 <div class="labelled-input">
-                    <div class="label">Set type:</div>
+                    <div class="label" x-text="t('setType')"></div>
                     <div class="input">
                         <select id="weather-type-select" data-custom-dropdown x-model="newWeather.type">
                             <template x-for="type in weatherTypes" :key="type">
-                                <option :value="type" x-text="type"></option>
+                                <option :value="type" x-text="weatherLabel(type)"></option>
                             </template>
                         </select>
                     </div>
                 </div>
                 <div class="labelled-input">
-                    <div class="label">Transition:</div>
+                    <div class="label" x-text="t('transition')"></div>
                     <div class="input input-with-slider">
                         <input type="range" x-model.number="newWeather.transition" min="0" max="60" step="1">
                         <span class="slider-value" x-text="newWeather.transition"></span>
                     </div>
                 </div>
                 <div class="labelled-input">
-                    <div class="label">Freeze weather:</div>
+                    <div class="label" x-text="t('freezeWeather')"></div>
                     <div class="input">
                         <input type="checkbox" x-model="newWeather.freeze">
                     </div>
                 </div>
                 <div class="labelled-input">
-                    <div class="label">Permanent Snow:</div>
+                    <div class="label" x-text="t('permanentSnow')"></div>
                     <div class="input">
                         <input type="checkbox" x-model="newWeather.permanentSnow">
                     </div>
                 </div>
             </div>
             <div class="admin-ui-option-group-controls">
-                <button @click="applyWeather()">Apply</button>
+                <button @click="applyWeather()" x-text="t('apply')"></button>
             </div>
         </div>
 
         <!-- Wind Section -->
         <div class="admin-ui-option-group">
-            <div class="title">Wind</div>
+            <div class="title" x-text="t('wind')"></div>
             <div class="input-group">
                 <div class="labelled-input">
-                    <div class="label">Current direction:</div>
+                    <div class="label" x-text="t('currentDirection')"></div>
                     <div class="input">
                         <input type="number" x-model="current.windDirection" readonly min="0" max="359" step="1">
                     </div>
                 </div>
                 <div class="labelled-input">
-                    <div class="label">Current speed:</div>
+                    <div class="label" x-text="t('currentSpeed')"></div>
                     <div class="input">
                         <input type="number" x-model="current.windSpeed" readonly min="0" max="1000" step="1">
                     </div>
                 </div>
                 <div class="labelled-input">
-                    <div class="label">Set direction:</div>
+                    <div class="label" x-text="t('setDirection')"></div>
                     <div class="input input-with-slider">
                         <input type="range" x-model.number="newWind.direction" min="0" max="359" step="1">
                         <span class="slider-value" x-text="newWind.direction"></span>
                     </div>
                 </div>
                 <div class="labelled-input">
-                    <div class="label">Set speed:</div>
+                    <div class="label" x-text="t('setSpeed')"></div>
                     <div class="input input-with-slider">
                         <input type="range" x-model.number="newWind.speed" min="0" max="100" step="1">
                         <span class="slider-value" x-text="newWind.speed"></span>
                     </div>
                 </div>
                 <div class="labelled-input">
-                    <div class="label">Freeze wind:</div>
+                    <div class="label" x-text="t('freezeWind')"></div>
                     <div class="input">
                         <input type="checkbox" x-model="newWind.freeze">
                     </div>
                 </div>
             </div>
             <div class="admin-ui-option-group-controls">
-                <button @click="applyWind()">Apply</button>
+                <button @click="applyWind()" x-text="t('apply')"></button>
             </div>
         </div>
 
         <div class="admin-ui-controls">
-            <button @click="closeAdminUi()">Close</button>
+            <button @click="closeAdminUi()" x-text="t('close')"></button>
         </div>
     </div>
 </body>

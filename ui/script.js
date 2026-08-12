@@ -42,6 +42,8 @@ const rdrWeatherIcons = {
 
 
 
+const defaultDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
 function weatherApp() {
     return {
         // State
@@ -49,6 +51,11 @@ function weatherApp() {
         weatherIcons: {},
         forecastVisible: false,
         adminUiVisible: false,
+
+        // Localization, delivered by the client on load
+        ui: {},
+        days: defaultDays,
+        weatherLabels: {},
 
         // Forecast data
         forecast: [],
@@ -101,6 +108,10 @@ function weatherApp() {
                 const resp = await fetch(`https://${GetParentResourceName()}/getGameName`);
                 const data = await resp.json();
 
+                this.ui = data.locale || {};
+                this.days = data.days || defaultDays;
+                this.weatherLabels = data.weatherLabels || {};
+
                 if (data.gameName === "rdr3") {
                     this.isRDR = true;
                     this.weatherIcons = rdrWeatherIcons;
@@ -131,10 +142,12 @@ function weatherApp() {
                 });
             }
 
-            // Initialize custom dropdowns after Alpine is ready
+            // Initialize custom dropdowns after Alpine is ready. The day names
+            // may have arrived after the dropdown was built, so rebuild it.
             this.$nextTick(() => {
                 if (typeof CustomDropdown !== 'undefined') {
                     CustomDropdown.init();
+                    CustomDropdown.refresh('#day-select');
                 }
             });
         },
@@ -158,8 +171,16 @@ function weatherApp() {
         },
 
         // Utility functions
+        t(key) {
+            return this.ui[key] || key;
+        },
+
         dayOfWeek(day) {
-            return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][day];
+            return this.days[day] || defaultDays[day];
+        },
+
+        weatherLabel(weather) {
+            return this.weatherLabels[weather] || weather;
         },
 
         getWeatherIcon(weather) {
@@ -218,7 +239,7 @@ function weatherApp() {
             this.current.sec = data.sec;
             this.current.timescale = data.timescale;
             this.current.weather = data.weather;
-            this.current.weatherDisplay = this.getWeatherIcon(data.weather) + ' ' + data.weather;
+            this.current.weatherDisplay = this.getWeatherIcon(data.weather) + ' ' + this.weatherLabel(data.weather);
             this.current.windDirection = data.windDirection;
             this.current.windSpeed = data.windSpeed;
             this.syncDelay = data.syncDelay;

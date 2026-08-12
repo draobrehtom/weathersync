@@ -19,27 +19,27 @@ RegisterCommand("synccheck", function(source, args, raw)
     CreateThread(function()
         local state = LumanWeather.getState()
 
-        chatMessage({100, 200, 255}, "=== Sync Check ===")
+        chatMessage({100, 200, 255}, L("synccheck.title"))
 
         if not state.syncEnabled then
-            chatMessage({255, 255, 0}, "WARNING", "sync is disabled (/weathersync) — all checks below are expected to fail")
+            chatMessage({255, 255, 0}, L("synccheck.warning"), L("synccheck.syncDisabled"))
         end
 
         if not state.initialized then
-            chatMessage({255, 80, 80}, "WARNING", "client init() never ran")
+            chatMessage({255, 80, 80}, L("synccheck.warning"), L("synccheck.noInit"))
         elseif state.baseNetworkTime == 0 then
-            chatMessage({255, 80, 80}, "WARNING", "init() ran but no syncBaseTime received from the server yet")
+            chatMessage({255, 80, 80}, L("synccheck.warning"), L("synccheck.noBaseTime"))
         end
 
         local server = LumanWeather.fetchServerState(3000)
 
         if not server then
-            chatMessage({255, 80, 80}, "FAIL", "no response from the server within 3s")
+            chatMessage({255, 80, 80}, L("synccheck.fail"), L("synccheck.noResponse"))
             return
         end
 
         local function report(label, passed, detail)
-            local status = passed and "OK" or "FAIL"
+            local status = passed and L("synccheck.ok") or L("synccheck.fail")
             chatMessage(passed and {50, 255, 50} or {255, 80, 80}, label, status .. " — " .. detail)
             print(string.format("[synccheck] %s: %s — %s", label, status, detail))
         end
@@ -53,37 +53,37 @@ RegisterCommand("synccheck", function(source, args, raw)
         local localTime = LumanWeather.computeLocalTime()
         local diff = WrapDiff(localTime, server.time, WEEK_SECONDS)
 
-        report("TIME", diff <= tolerance,
-            string.format("server %s, client %s, diff %ds (tolerance %ds)", FormatTime(server.time), FormatTime(localTime), diff, tolerance))
+        report(L("synccheck.time"), diff <= tolerance,
+            L("synccheck.detailTime", FormatTime(server.time), FormatTime(localTime), diff, tolerance))
 
         -- 2. The actual in-game clock vs what we computed (checks the override applied)
         local clockTime = GetClockHours() * 3600 + GetClockMinutes() * 60 + GetClockSeconds()
         local clockDiff = WrapDiff(clockTime, localTime % DAY_SECONDS, DAY_SECONDS)
 
-        report("GAME CLOCK", clockDiff <= tolerance,
-            string.format("in-game %.2d:%.2d:%.2d, computed %s, diff %ds", GetClockHours(), GetClockMinutes(), GetClockSeconds(), FormatTime(localTime), clockDiff))
+        report(L("synccheck.clock"), clockDiff <= tolerance,
+            L("synccheck.detailClock", GetClockHours(), GetClockMinutes(), GetClockSeconds(), FormatTime(localTime), clockDiff))
 
         -- 3. Last weather received from the server vs the server's actual state
-        report("WEATHER EVENT", state.serverWeather == server.weather,
-            string.format("server %s, received %s", server.weather, tostring(state.serverWeather)))
+        report(L("synccheck.weatherEvent"), state.serverWeather == server.weather,
+            L("synccheck.detailWeatherEvent", server.weather, tostring(state.serverWeather)))
 
         -- 4. Weather actually applied vs what should be applied in this region
         local x, y, z = table.unpack(GetEntityCoords(PlayerPedId()))
         local expectedWeather = LumanWeather.translateWeatherForRegion(server.weather, x, y, z)
 
-        report("WEATHER APPLIED", state.weather == expectedWeather,
-            string.format("expected %s, applied %s (region monitor updates every 5s)", expectedWeather, tostring(state.weather)))
+        report(L("synccheck.weatherApplied"), state.weather == expectedWeather,
+            L("synccheck.detailWeatherApplied", expectedWeather, tostring(state.weather)))
 
         -- 5. Wind, timescale, freeze flag
-        report("WIND", state.serverWindDirection == server.windDirection and state.serverWindSpeed == server.windSpeed,
-            string.format("server %.1f°/%.1f, received %s/%.1f", server.windDirection, server.windSpeed,
-                state.serverWindDirection and string.format("%.1f°", state.serverWindDirection) or "none", state.serverWindSpeed))
+        report(L("synccheck.wind"), state.serverWindDirection == server.windDirection and state.serverWindSpeed == server.windSpeed,
+            L("synccheck.detailWind", server.windDirection, server.windSpeed,
+                state.serverWindDirection and string.format("%.1f°", state.serverWindDirection) or L("synccheck.none"), state.serverWindSpeed))
 
-        report("TIMESCALE", state.timescale == server.timescale,
-            string.format("server %.2f, client %.2f", server.timescale, state.timescale))
+        report(L("synccheck.timescale"), state.timescale == server.timescale,
+            L("synccheck.detailTimescale", server.timescale, state.timescale))
 
-        report("TIME FROZEN", state.timeFrozen == server.frozen,
-            string.format("server %s, client %s", tostring(server.frozen), tostring(state.timeFrozen)))
+        report(L("synccheck.timeFrozen"), state.timeFrozen == server.frozen,
+            L("synccheck.detailTimeFrozen", tostring(server.frozen), tostring(state.timeFrozen)))
     end)
 end, false)
 
@@ -103,28 +103,30 @@ RegisterCommand("weatherstatus", function(source, args, raw)
     local tempUnit = metric and "C" or "F"
 
     local windSpeed = metric and math.floor(GetWindSpeed() * 3.6) or math.floor(GetWindSpeed() * 3.6 * 0.621371)
-    local windUnit = metric and "kph" or "mph"
+    local windUnit = metric and L("units.kph") or L("units.mph")
 
-    chatMessage({100, 200, 255}, "=== Weather Sync Status ===")
-    chatMessage({255, 255, 255}, "Sync Enabled", tostring(state.syncEnabled))
-    chatMessage({255, 255, 255}, "Weather", state.weather or "unknown")
-    chatMessage({255, 255, 255}, "Time", FormatTime(LumanWeather.computeLocalTime()))
-    chatMessage({255, 255, 255}, "Timescale", string.format("%.2f", state.timescale))
-    chatMessage({255, 255, 255}, "Time Frozen", tostring(state.timeFrozen))
-    chatMessage({255, 255, 255}, "Temperature", string.format("%d °%s", temp, tempUnit))
-    chatMessage({255, 255, 255}, "Wind", string.format("%d %s %s", windSpeed, windUnit, GetCardinalDirection(state.windDirection)))
-    chatMessage({255, 255, 255}, "Altitude (Sea)", string.format("%dm", math.floor(pos.z - LumanWeather.MEAN_SEA_LEVEL)))
-    chatMessage({255, 255, 255}, "Altitude (Ground)", string.format("%dm", math.floor(GetEntityHeightAboveGround(ped))))
-    chatMessage({255, 255, 255}, "Snow on Ground", tostring(state.snowOnGround))
-    chatMessage({255, 255, 255}, "Region", LumanWeather.getRegionName(x, y, z))
-    chatMessage({255, 255, 255}, "Position", string.format("%.1f, %.1f, %.1f", x, y, z))
+    local metres = L("units.metres")
+
+    chatMessage({100, 200, 255}, L("status.title"))
+    chatMessage({255, 255, 255}, L("status.syncEnabled"), tostring(state.syncEnabled))
+    chatMessage({255, 255, 255}, L("status.weather"), state.weather or L("status.unknown"))
+    chatMessage({255, 255, 255}, L("status.time"), FormatTime(LumanWeather.computeLocalTime()))
+    chatMessage({255, 255, 255}, L("status.timescale"), string.format("%.2f", state.timescale))
+    chatMessage({255, 255, 255}, L("status.timeFrozen"), tostring(state.timeFrozen))
+    chatMessage({255, 255, 255}, L("status.temperature"), string.format("%d °%s", temp, tempUnit))
+    chatMessage({255, 255, 255}, L("status.wind"), string.format("%d %s %s", windSpeed, windUnit, GetCardinalLabel(state.windDirection)))
+    chatMessage({255, 255, 255}, L("status.altitudeSea"), string.format("%d%s", math.floor(pos.z - LumanWeather.MEAN_SEA_LEVEL), metres))
+    chatMessage({255, 255, 255}, L("status.altitudeGround"), string.format("%d%s", math.floor(GetEntityHeightAboveGround(ped)), metres))
+    chatMessage({255, 255, 255}, L("status.snowOnGround"), tostring(state.snowOnGround))
+    chatMessage({255, 255, 255}, L("status.region"), LMap("regions", LumanWeather.getRegionName(x, y, z)))
+    chatMessage({255, 255, 255}, L("status.position"), string.format("%.1f, %.1f, %.1f", x, y, z))
 
     local stats = LumanWeather.getDebugStats()
 
-    chatMessage({100, 200, 255}, "=== Sync Events Received ===")
-    chatMessage({255, 255, 255}, "Weather Syncs", tostring(stats.weatherSyncCount))
-    chatMessage({255, 255, 255}, "Time Syncs", tostring(stats.timeSyncCount))
-    chatMessage({255, 255, 255}, "Wind Syncs", tostring(stats.windSyncCount))
+    chatMessage({100, 200, 255}, L("status.eventsTitle"))
+    chatMessage({255, 255, 255}, L("status.weatherSyncs"), tostring(stats.weatherSyncCount))
+    chatMessage({255, 255, 255}, L("status.timeSyncs"), tostring(stats.timeSyncCount))
+    chatMessage({255, 255, 255}, L("status.windSyncs"), tostring(stats.windSyncCount))
 end, false)
 
 -- ============================================================================
@@ -133,26 +135,26 @@ end, false)
 
 RegisterCommand("weatherdebug", function(source, args, raw)
     local enabled = LumanWeather.toggleDebug()
-    chatMessage({255, 255, 128}, "Luman Weather Debug", enabled and "Enabled" or "Disabled")
+    chatMessage({255, 255, 128}, L("debug.label"), enabled and L("debug.enabled") or L("debug.disabled"))
 end, false)
 
 -- Locally preview a weather type with region translation applied
 RegisterCommand("testweather", function(source, args, raw)
     if not args[1] then
-        chatMessage({255, 0, 0}, "Error", "Please specify a weather type")
+        chatMessage({255, 0, 0}, L("error.label"), L("error.noWeatherType"))
         return
     end
 
     if not TableContains(Config.weatherTypes, args[1]) then
-        chatMessage({255, 0, 0}, "Error", "Invalid weather type: " .. args[1])
-        chatMessage({255, 255, 128}, "Available types", table.concat(Config.weatherTypes, ", "))
+        chatMessage({255, 0, 0}, L("error.label"), L("error.invalidWeatherType", args[1]))
+        chatMessage({255, 255, 128}, L("error.availableTypes"), table.concat(Config.weatherTypes, ", "))
         return
     end
 
     local x, y, z = table.unpack(GetEntityCoords(PlayerPedId()))
     local translatedWeather = LumanWeather.translateWeatherForRegion(args[1], x, y, z)
 
-    chatMessage({100, 255, 100}, "Test Weather", string.format("Testing %s -> %s", args[1], translatedWeather))
+    chatMessage({100, 255, 100}, L("test.label"), L("test.running", args[1], translatedWeather))
 
     LumanWeather.setWeatherNative(translatedWeather, 5.0)
 
@@ -166,60 +168,60 @@ end, false)
 -- ============================================================================
 
 AddEventHandler("luman-weather:clientReady", function()
-    TriggerEvent("chat:addSuggestion", "/forecast", "Toggle display of weather forecast", {})
+    TriggerEvent("chat:addSuggestion", "/forecast", L("suggestions.forecast.desc"), {})
 
-    TriggerEvent("chat:addSuggestion", "/syncdelay", "Change the server tick interval", {
-        {name = "delay", help = "The time in milliseconds between server ticks"}
+    TriggerEvent("chat:addSuggestion", "/syncdelay", L("suggestions.syncdelay.desc"), {
+        {name = "delay", help = L("suggestions.syncdelay.delay")}
     })
 
-    TriggerEvent("chat:addSuggestion", "/time", "Change the time", {
-        {name = "day", help = "0 = Sun, 1 = Mon, 2 = Tue, 3 = Wed, 4 = Thu, 5 = Fri, 6 = Sat"},
-        {name = "hour", help = "0-23"},
-        {name = "minute", help = "0-59"},
-        {name = "second", help = "0-59"},
-        {name = "transition", help = "Transition time in milliseconds"},
-        {name = "freeze", help = "0 = don't freeze time, 1 = freeze time"}
+    TriggerEvent("chat:addSuggestion", "/time", L("suggestions.time.desc"), {
+        {name = "day", help = L("suggestions.time.day")},
+        {name = "hour", help = L("suggestions.time.hour")},
+        {name = "minute", help = L("suggestions.time.minute")},
+        {name = "second", help = L("suggestions.time.second")},
+        {name = "transition", help = L("suggestions.time.transition")},
+        {name = "freeze", help = L("suggestions.time.freeze")}
     })
 
-    TriggerEvent("chat:addSuggestion", "/timescale", "Change the rate at which time passes", {
-        {name = "scale", help = "In-game seconds per real second (0 = real time)"}
+    TriggerEvent("chat:addSuggestion", "/timescale", L("suggestions.timescale.desc"), {
+        {name = "scale", help = L("suggestions.timescale.scale")}
     })
 
-    TriggerEvent("chat:addSuggestion", "/weather", "Change the weather", {
-        {name = "type", help = "The type of weather to change to"},
-        {name = "transition", help = "Transition time in seconds"},
-        {name = "freeze", help = "0 = don't freeze weather, 1 = freeze weather"},
-        {name = "snow", help = "0 = temporary snow coverage, 1 = permanent snow coverage"}
+    TriggerEvent("chat:addSuggestion", "/weather", L("suggestions.weather.desc"), {
+        {name = "type", help = L("suggestions.weather.type")},
+        {name = "transition", help = L("suggestions.weather.transition")},
+        {name = "freeze", help = L("suggestions.weather.freeze")},
+        {name = "snow", help = L("suggestions.weather.snow")}
     })
 
-    TriggerEvent("chat:addSuggestion", "/weatherui", "Open weather admin UI", {})
+    TriggerEvent("chat:addSuggestion", "/weatherui", L("suggestions.weatherui.desc"), {})
 
-    TriggerEvent("chat:addSuggestion", "/wind", "Change wind direction and speed", {
-        {name = "direction", help = "Direction of the wind in degrees"},
-        {name = "speed", help = "Minimum wind speed"},
-        {name = "freeze", help = "0 = don't freeze wind, 1 = freeze wind"}
+    TriggerEvent("chat:addSuggestion", "/wind", L("suggestions.wind.desc"), {
+        {name = "direction", help = L("suggestions.wind.direction")},
+        {name = "speed", help = L("suggestions.wind.speed")},
+        {name = "freeze", help = L("suggestions.wind.freeze")}
     })
 
-    TriggerEvent("chat:addSuggestion", "/weathersync", "Enable/disable weather and time sync", {})
+    TriggerEvent("chat:addSuggestion", "/weathersync", L("suggestions.weathersync.desc"), {})
 
-    TriggerEvent("chat:addSuggestion", "/mytime", "Change local time (disables sync)", {
-        {name = "hour", help = "0-23"},
-        {name = "minute", help = "0-59"},
-        {name = "second", help = "0-59"},
-        {name = "transition", help = "Transition time in milliseconds"}
+    TriggerEvent("chat:addSuggestion", "/mytime", L("suggestions.mytime.desc"), {
+        {name = "hour", help = L("suggestions.mytime.hour")},
+        {name = "minute", help = L("suggestions.mytime.minute")},
+        {name = "second", help = L("suggestions.mytime.second")},
+        {name = "transition", help = L("suggestions.mytime.transition")}
     })
 
-    TriggerEvent("chat:addSuggestion", "/myweather", "Change local weather (disables sync)", {
-        {name = "type", help = "The type of weather to change to"},
-        {name = "transition", help = "Transition time in seconds"},
-        {name = "snow", help = "0 = no snow on ground, 1 = snow on ground"}
+    TriggerEvent("chat:addSuggestion", "/myweather", L("suggestions.myweather.desc"), {
+        {name = "type", help = L("suggestions.myweather.type")},
+        {name = "transition", help = L("suggestions.myweather.transition")},
+        {name = "snow", help = L("suggestions.myweather.snow")}
     })
 
-    TriggerEvent("chat:addSuggestion", "/synccheck", "Compare local weather/time state with the server", {})
-    TriggerEvent("chat:addSuggestion", "/weatherstatus", "Display current weather/time sync status", {})
-    TriggerEvent("chat:addSuggestion", "/weatherdebug", "Toggle weather sync debug mode", {})
+    TriggerEvent("chat:addSuggestion", "/synccheck", L("suggestions.synccheck.desc"), {})
+    TriggerEvent("chat:addSuggestion", "/weatherstatus", L("suggestions.weatherstatus.desc"), {})
+    TriggerEvent("chat:addSuggestion", "/weatherdebug", L("suggestions.weatherdebug.desc"), {})
 
-    TriggerEvent("chat:addSuggestion", "/testweather", "Locally preview a weather type", {
-        {name = "weather", help = "Weather type to test"}
+    TriggerEvent("chat:addSuggestion", "/testweather", L("suggestions.testweather.desc"), {
+        {name = "weather", help = L("suggestions.testweather.weather")}
     })
 end)

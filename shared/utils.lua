@@ -73,10 +73,25 @@ function GetDayOfWeek(day)
     return ({"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"})[day + 1]
 end
 
+-- Localized labels for display. GetDayOfWeek/GetCardinalDirection stay
+-- canonical so logs and comparisons are language-independent.
+function GetDayLabel(day)
+    local days = LGet("days")
+    return (type(days) == "table" and days[day + 1]) or GetDayOfWeek(day)
+end
+
+function GetCardinalLabel(heading)
+    return LMap("cardinals", GetCardinalDirection(heading))
+end
+
+function GetWeatherLabel(weather)
+    return LMap("weather", weather)
+end
+
 -- Format game time in seconds as "Sun 06:00:00"
 function FormatTime(time)
     local day, hour, minute, second = TimeToDHMS(time)
-    return string.format("%s %.2d:%.2d:%.2d", GetDayOfWeek(day), hour, minute, second)
+    return string.format("%s %.2d:%.2d:%.2d", GetDayLabel(day), hour, minute, second)
 end
 
 -- Absolute difference between two values on a circular scale
